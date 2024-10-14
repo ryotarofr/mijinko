@@ -1,5 +1,8 @@
 use diamond_types::list::{Branch as ListBranch, OpLog as ListOpLog};
+use dioxus::prelude::*;
+use dioxus_logger::tracing::{info, Level}; // OpLog と Branch を正しくインポート
 
+#[component]
 fn CrdtSample() -> Element {
     let mut oplog = use_signal(ListOpLog::new); // OpLog のインスタンスを作成
     let mut input_value = use_signal(String::new);
