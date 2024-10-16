@@ -2,7 +2,6 @@ use crate::config::constants::LOREM_IPSUM;
 use crate::func::editor_state::EditorState;
 use crate::types::enums::{Direction, Glyph};
 use dioxus::prelude::*;
-// use dioxus_desktop::use_eval;
 use keyboard_types::{Code, Key, Modifiers};
 
 macro_rules! code_events {
@@ -27,8 +26,8 @@ macro_rules! code_events {
     }
 }
 
-pub fn Editor(cx: Scope) -> Element {
-    let editor_state = use_ref(cx, || EditorState::from(LOREM_IPSUM));
+pub fn Editor() -> Element {
+    let editor_state = use_signal(|| EditorState::from(LOREM_IPSUM));
     let line_style = r#"
 min-height: 15px;
 outline: none;
@@ -48,7 +47,7 @@ grid-template_areas: "l c";
 "#;
 
     let handle_clicks = move |event: Event<MouseData>| {
-        let runner = use_eval(cx);
+        let runner = use_eval();
         let coords = event.page_coordinates();
         let x = coords.x;
         let y = coords.y;
