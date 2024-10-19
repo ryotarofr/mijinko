@@ -10,7 +10,7 @@ edition = "2021"
 
 dioxus = { version = "0.5", features = ["web"] }
 getrandom = { version = "0.2.15", features = ["js"] }
-interprocess = "2.2.1"
+# interprocess = "2.2.1"
 keyboard-types = "0.7.0"
 tokio = "1.40.0"
 
