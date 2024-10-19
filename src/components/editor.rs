@@ -1,5 +1,5 @@
 use crate::config::constants::LOREM_IPSUM;
-use crate::func::editor_state::EditorState;
+use crate::r#fn::editor_state::EditorState;
 use crate::types::enums::{Direction, Glyph};
 use dioxus::prelude::*;
 use keyboard_types::{Code, Key, Modifiers};
@@ -27,7 +27,7 @@ macro_rules! code_events {
 }
 
 pub fn Editor() -> Element {
-    let editor_state = use_signal(|| EditorState::from(LOREM_IPSUM));
+    let mut editor_state = use_signal(|| EditorState::from(LOREM_IPSUM));
     let line_style = r#"
 min-height: 15px;
 outline: none;
@@ -47,26 +47,30 @@ grid-template_areas: "l c";
 "#;
 
     let handle_clicks = move |event: Event<MouseData>| {
-        let runner = use_eval();
+        // Use `use_eval` to create a runner for JavaScript execution
+        let mut eval = eval(
+            r#"
+            let ran = document.caretRangeFromPoint({x},{y});
+            let el = ran.startContainer;
+            let par = el.parentElement;
+            return [
+                parseInt(par.getAttribute('line')) || -1,
+                [...par.childNodes].indexOf(el) + 1,
+            ];
+            "#,
+        );
+
         let coords = event.page_coordinates();
         let x = coords.x;
         let y = coords.y;
 
-        to_owned![runner, editor_state];
-        let script = format!(
-            r#"
-ran = document.caretRangeFromPoint({x},{y});
-el = ran.startContainer;
-par = el.parentElement;
-return [
-parseInt(par.getAttribute('line')) || -1,
-[...par.childNodes].indexOf(el)+1,
-];
+        // JavaScriptへ座標を送信して実行
+        eval.send(format!("{} {}", x, y).into()).unwrap();
 
-"#
-        );
-        cx.spawn(async move {
-            if let Ok(res) = runner(script).await {
+        // スポーンして非同期に実行
+        spawn(async move {
+            if let Ok(res) = eval.recv().await {
+                // JavaScriptからのレスポンスを解析
                 let line = res.get(0).unwrap().as_i64().unwrap();
                 let cursor = res.get(1).unwrap().as_i64().unwrap();
 
@@ -74,6 +78,7 @@ parseInt(par.getAttribute('line')) || -1,
                     return;
                 }
 
+                // エディタの状態を更新
                 editor_state.with_mut(|e| e.set_cursor(line as usize, cursor as usize));
 
                 println!("{line}x{cursor}");
@@ -116,13 +121,13 @@ parseInt(par.getAttribute('line')) || -1,
     let (current_line, current_position) =
         editor_state.with(|e| (e.current_line, e.cursor_position));
 
-    cx.render(rsx! {
+    rsx! {
         div {
             style: "{editor_style}",
             tabindex: 0,
             autofocus: true,
             onkeydown: handle_global_keys,
-            editor_state.read().iter().map(|(line_number, line)| {
+            {editor_state.read().iter().map(|(line_number, line)| {
                 let current = current_line == line_number;
                 let background = if current { "pink" } else { "grey" };
                 rsx! {
@@ -161,14 +166,12 @@ parseInt(par.getAttribute('line')) || -1,
                             }
                         },
                         if line.as_vec().is_empty() {
-                            rsx!("")
+                            div{ "" }
                         }
 
                     },
-                }})
-        },
-        div {
-            "Line: {current_line} Position: {current_position}"
+                }})}
         }
-    })
+        div { "Line: {current_line} Position: {current_position}" }
+    }
 }
