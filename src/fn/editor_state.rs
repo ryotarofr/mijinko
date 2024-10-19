@@ -1,5 +1,5 @@
-use crate::func::editor_data::EditorData;
-use crate::func::line::Line;
+use crate::r#fn::editor_data::EditorData;
+use crate::r#fn::line::Line;
 use crate::types::enums::{Direction, Glyph};
 
 #[derive(Debug)]

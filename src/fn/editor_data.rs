@@ -1,4 +1,4 @@
-use crate::func::line::Line;
+use crate::r#fn::line::Line;
 use crate::types::enums::Glyph;
 
 #[derive(Debug)]
@@ -26,6 +26,7 @@ impl EditorData {
             .insert(cursor_pos - 1, glyph);
     }
 }
+
 impl From<&str> for EditorData {
     fn from(value: &str) -> EditorData {
         let mut st = EditorData::new();
